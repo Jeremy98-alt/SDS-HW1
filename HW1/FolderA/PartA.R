@@ -104,15 +104,15 @@ theoretical.bound <- maxcut/2
 theoretical.bound
 
 # Change the graph size to see if there is an impact on the performance --------
+library(igraph)
 
-G2 <- erdos.renyi.game(10, 1/2)
+G2 <- erdos.renyi.game(20, 1/5)
 plot(G2)
 
 #firstly search to create our adjacency_matrix from G
-adj2 <- as_adjacency_matrix(G2, type = "both",
-                           attr = NULL, edges = FALSE)
+adj2 <- as_adjacency_matrix(G2)
 #convert S4 object to matrix
-adj2 <- matrix(adj2, ncol = gsize(G2), nrow = gsize(G2))
+adj2 <- as.matrix(adj2)
 
 #maximum cut
 result2 <- maxcut(adj2)
@@ -138,3 +138,21 @@ theoretical.bound2
 
 averageCutSize(vertex.names, list.edges, 1000)
 
+#Binomial distribution
+colo <- c(rgb(32/255, 74/255, 135/255, 0.7))
+          
+#Set parameters
+pp <- 0.5
+nn <- 100
+
+#Plot PMF
+plot(0:nn, dbinom(0:nn, nn, pp),
+     xlim = c(0,100), ylim = c(0,0.10),
+     type="b", lty=3,
+     xlab= "", ylab ="",
+     col=gray(.8), pch=21, bg=colo)
+
+grid()
+
+legend("topleft", c("p = 0.5, n = 20", n = 100),
+       col = colo, pch=19, bty="n", cex = .8)
