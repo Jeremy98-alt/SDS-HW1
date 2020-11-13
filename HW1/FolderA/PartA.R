@@ -34,10 +34,10 @@ install.packages('Rlab')
 library(Rlab)
 
 #create the function for our goal to obtain our subset of V
-subset.V <- function(vertex.names, M){
+subset.V <- function(vertex.names, number_of_vertex){
   U <- c()
   
-  for(i in 1:M){
+  for(i in 1:number_of_vertex){
     randBern <- rbern(1, 0.5)
     if(randBern == 1)
       U <- append(U, vertex.names[i])
@@ -58,7 +58,7 @@ U
 # Average Cut-Size over these M simulations -------------------------------
 
 #create subset U edges for the maxcut..
-edges.U <- function(U, list.edges){
+num.edges.U <- function(U, list.edges){
   edges <- c()
   
   `%notin%` <- Negate(`%in%`) #define new operator
@@ -67,32 +67,20 @@ edges.U <- function(U, list.edges){
       edges <- append(edges, c(list.edges[row, 1], list.edges[row, 2]) )
     }
   }
-  
-  subgraph.U <- graph(edges, n=length(U), directed=F)
-  return(subgraph.U)
+
+  return(length(edges))
 }
 
 #calculate M times and return the average cut size
-averageCutSize <- function(vertex.names, M, list.edges){
+averageCutSize <- function(vertex.names, list.edges, M){
   avg.cutsize <- c()
   
   for(i in 1:M){
-    U <- subset.V(vertex.names, M)
-    make.U.graph <- edges.U(U, list.edges)
-    
-    Ve <- V(make.U.graph)
-    Ed <- E(make.U.graph)
-    plot(make.U.graph)
-    
-    #make the adjacency matrix of U like in the previous example
-    adjU <- as_adjacency_matrix(make.U.graph, type = "both",
-                               attr = NULL, edges = FALSE)
-    
-    #convert S4 object to matrix
-    adjU <- matrix(adjU, ncol = gsize(make.U.graph), nrow = gsize(make.U.graph))
+    U <- subset.V(vertex.names, length(vertex.names)) #define the subset of V
+    card.U <- num.edges.U(U, list.edges) #cardinality of U
     
     #append the result
-    avg.cutsize <- append(avg.cutsize, abs(maxcut(adjU)$pobj) )
+    avg.cutsize <- append(avg.cutsize, card.U)
   }
   
   #finally return the mean!
@@ -107,17 +95,46 @@ adj[lower.tri(adj, diag=FALSE)] <- 0
 list.edges <- which(adj==1, arr.ind = TRUE)
 colnames(list.edges) <- c("V1", "V2") #change columns name..
 
-plot(make.U.graph)
-
 #call M times the averageCutSize
-averageCutSize(vertex.names, gsize(G), list.edges)
+averageCutSize(vertex.names, list.edges, 1000)
 
 # Theoretical Bound OPT(G)/2 ----------------------------------------------
 
 theoretical.bound <- maxcut/2
 theoretical.bound
 
-
 # Change the graph size to see if there is an impact on the performance --------
 
+G2 <- erdos.renyi.game(10, 1/2)
+plot(G2)
+
+#firstly search to create our adjacency_matrix from G
+adj2 <- as_adjacency_matrix(G2, type = "both",
+                           attr = NULL, edges = FALSE)
+#convert S4 object to matrix
+adj2 <- matrix(adj2, ncol = gsize(G2), nrow = gsize(G2))
+
+#maximum cut
+result2 <- maxcut(adj2)
+
+#return the maximum cut, use the value returned
+maxcut2 <- abs(result2$pobj)
+maxcut2
+
+#matrix correlation or... X
+result2$Z
+
+#show the result
+vertex.names <- as_ids(V(G2))
+U <- subset.V(vertex.names, gsize(G2))
+
+adj2[lower.tri(adj2, diag=FALSE)] <- 0 
+
+list.edges <- which(adj2==1, arr.ind = TRUE)
+colnames(list.edges) <- c("V1", "V2")
+
+theoretical.bound2 <- maxcut2/2
+theoretical.bound2
+
+averageCutSize(vertex.names, list.edges, 1000)
 

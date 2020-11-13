@@ -1,7 +1,7 @@
 ---
 title: "Part A"
 author: "Jeremy Sapienza & Stefano D'Arrigo"
-date: "10/11/2020"
+date: "22/11/2020"
 output: html_document
 ---
 
@@ -9,27 +9,224 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# **SDS HOMEWORK** 
+### **PART A**
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+**Randomize this...**
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+$~$
+
+We are delve in the world of graphs, but what is a graph? Is a network of verteces with their edges directed or undirected defined by **G=<V,E>**. In this first part of the homework we are encounter a graph with V = {1, 2, 3, 4, 5, 6, 7} and E = {{1, 2}, {1, 4}, {2, 3}, {4, 3}, {3, 5}, {5, 6}, {5, 7}}
+
+For this reason, we are focussing in a library provided by R **igraph**, we recall this library and we create the graph for this exercise.
+
+```{r include=FALSE}
+#pick a specific (small) graph G
+library(igraph)
+```
+
+$~$
 
 ```{r}
-print("Ciao")
+G <- graph( edges=c(1,2, 2,3, 1,4, 4,3, 3,5, 5,6, 5,7),  n=7, directed=F)
+plot(G)
+```
+
+Now let's face with the **Max-Cut** problem, this problem says that we must solve:
+
+$~$
+
+<center> max{ card(*$\delta$*(*U*)) for *U* $\subseteq$ *V* } </center>
+
+$~$
+
+To calculate the max cut of the main graph G, we used another library of R called **sdpt3r**, then we created the matrix with few methods provided by the igraph library
+
+$~$
+
+```{r include=FALSE}
+#run the library and obtain the max-cut(G)
+library(sdpt3r)
+```
+
+```{r}
+#Create the adjacency_matrix from G, type="both" in order to have the sparse matrix in both side
+adj <- as_adjacency_matrix(G, type = "both",
+                           attr = NULL, edges = FALSE)
+
+#convert S4 object to matrix, convert also in matrix structure
+adj <- matrix(adj, ncol = gsize(G), nrow = gsize(G))
+
+#maximum cut, use the sdpt3r method
+result <- maxcut(adj)
+
+#show the maxcut, we made the absolute value of the maxcut result, because the main formula gives a negative interpretation
+maxcut <- abs(result$pobj)
+maxcut
+
 ```
 
 
-```{r cars}
-summary(cars)
+$~$
+
+What is U? Is a subset of V, our initial graph. U is a subgraph chose with the Bernoulli distribution, but then we will delve in this argument.
+Now, for any vertex set U $\subseteq$ V, define the cut determined by U as: 
+
+$~$
+
+<center> $\delta$(*U*) = { {u,v} $\in$ *E* such that u $\in$ *U* and v $\notin$ *U* }</center>
+
+$~$
+
+So, let OPT = OPT(*G*) be the size of the maximum cut we are chasing. Our goal is to find an algorithm for which there is a
+factor $\alpha$ > 0 independent on the graph *G* such that the set *U* it builds is guaranteed to have:
+
+$~$
+
+<center>  card(*$\delta$*(*U*)) $\geq$ $\alpha$ x OPT </center>
+
+$~$
+
+By the way, we are spoke about U the subset of V. This is create every time we run the **Randomized Max-Cut Algorithm**. this algorithm "create U as *random* subset of V; that is, for each vertex v $\in$ V, flip a coin: if Heads, add v to U otherwise do not."
+
+$~$
+
+We see in this last phrase that is useful to use the **Bernoulli distribution** to obtain each time a success of a failure that allow us to insert in our subset U a vertex of G, with a probability p = 1/2. Because this event simulate the flip of a coin with results based on head (1: success) or tail (0: failure). 
+
+$~$
+
+<center> *******FORMULA AND PLOT HERE******** </center>
+
+$~$
+
+In this way we created the piece of code about the creation of this subset, we used another library called **Rlab** useful to achieve our goal:
+
+$~$
+
+```{r include=FALSE}
+#first install and use the package that contains the bernoulli distro 
+library(Rlab)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+```{r}
+#create the function for our goal to obtain our subset of V
+subset.V <- function(vertex.names, number_of_vertex){
+  U <- c()
+  
+  for(i in 1:number_of_vertex){
+    randBern <- rbern(1, 0.5)
+    if(randBern == 1)
+      U <- append(U, vertex.names[i])
+  }
+  
+  return(U)
+}
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# get the vertex's names, in this case this function as_ids() create a vector of vertex ... or do as.character(V(G))
+vertex.names <- as_ids(V(G))
+
+#try M times to generate the subset of V
+U <- subset.V(vertex.names, gsize(G))
+U
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+$~$
+
+The homework pretends to run the Randomized Max-Cut Algorithm a large number M of times and evaluate the average cut-size over these M simulations comparing it with the theoretical bound opt(G)/2 to follow the performance analysis.
+
+Before starting to run M times the algorithm we set the adjacency matrix for one side and obtain the edges of our G graph to create the $\delta$(*U*) set.
+
+$~$
+
+```{r}
+#set zero the Lower Triangular Part of a Matrix to avoid catching the duplicates edges...the graph is undirected!
+adj[lower.tri(adj, diag=FALSE)] <- 0 
+
+#create the list of edges from our G graph
+list.edges <- which(adj==1, arr.ind = TRUE) #save the true link
+colnames(list.edges) <- c("V1", "V2") #change columns name..
+
+list.edges
+```
+
+$~$
+
+After the creation of this dataframe contains the edges of G graph, we made this algorithm that allow us according to the initial request "Evaluate the average cut-size over these M simulations and compare it with the theoretical bound opt(G)/2."
+
+$~$
+
+```{r}
+#create subset U edges for the maxcut..
+num.edges.U <- function(U, list.edges){
+  edges <- c()
+  
+  `%notin%` <- Negate(`%in%`) #define new operator
+  for(row in 1:nrow(list.edges)){
+    if( (list.edges[row, 1] %in% U) && (list.edges[row, 2] %notin% U) ){
+      edges <- append(edges, c(list.edges[row, 1], list.edges[row, 2]) )
+    }
+  }
+
+  return(length(edges))
+}
+
+#calculate M times and return the average cut size
+averageCutSize <- function(vertex.names, list.edges, M){
+  avg.cutsize <- c()
+  
+  for(i in 1:M){
+    U <- subset.V(vertex.names, length(vertex.names)) #define the subset of V
+    card.U <- num.edges.U(U, list.edges) #cardinality of U
+    
+    #append the result
+    avg.cutsize <- append(avg.cutsize, card.U)
+  }
+  
+  #finally return the mean!
+  return(mean(avg.cutsize))
+}
+```
+
+$~$
+
+Call a large number of times the averageCutSize() to see if the performance is respected
+
+$~$
+
+```{r}
+#call M times the averageCutSize
+averageCutSize(vertex.names, list.edges, 1000)
+```
+
+$~$
+
+Now, we can see if the performance analysis is respected, it says "Let U be the set chosen by this (randomized) algorithm.
+Then the expected size of the cut set determined by U is at least OPT/2 :"
+
+$~$
+
+<center> $\mathbb{E}$(card(*$\delta$*(*U*))) $\geq$  OPT/2 </center>
+
+$~$
+
+```{r}
+theoretical.bound <- maxcut/2
+theoretical.bound
+```
+
+$~$
+
+The performance is respected, but... If we increase the size of our G graph (maybe with a random graph) what is the result?
+
+$~$
+
+*****TRY WITH A HUGE GRAPH IN TERM OF VERTECES*****
+
+
+
+
+
+
+
