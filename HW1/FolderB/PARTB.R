@@ -37,7 +37,7 @@ createGraph <- function(G, n, vertex.names){
 create a vector of vertex ... or do as.character(V(G)) "
 vertex.names <- as_ids(V(G))
 
-newg <- createGraph(G, n = 10, vertex.names)
+newg <- createGraph(G, n = 100, vertex.names)
 plot(newg, vertex.size=10, layout= layout.kamada.kawai, vertex.color="green", edge.curverd=.2, arrow.size=.1, arrow.width=.1, edge.arrow.size=.3, vertex.label.cex=.9)
 
 
@@ -53,7 +53,19 @@ for (i in 1:length(indegree.distro)) {
 frequency.x
 
 # Plot the PMF of X
-plot(c(0:3), frequency.x, type="h",
+plot(c(0:max.freq.value), frequency.x, type="h",
      main = "in-degree distribution", xlab="in-degree", ylab="Number of vertices",
-     lty=2, col=gray(.7))
-points(c(0:3), frequency.x, pch=19, col="red")
+     lty=2, col=gray(.7), xlim=c(0,max.freq.value+1), ylim=c(0, max.freq.value+1))
+points(c(0:max.freq.value), frequency.x, pch=19, col="red")
+
+#Plot the Log-Log plot
+plot(c(0:max.freq.value), frequency.x,
+     main = "in-degree distribution log-log plot", xlab="in-degree", ylab="Number of vertices",
+     lty=2, col=gray(.7), log = "y")
+points(c(0:max.freq.value), frequency.x, pch=21, col="red")
+
+# Plot the CCDF of X .... I HAVE MY DOUBTS about this
+plot(cumsum(c(0, frequency.x, 0)), c(0, c(0:max.freq.value+1), 4), type="l",
+     main = "complimentary cumulative degree distribution", xlab="Number of verteces", ylab="in-degree",
+     lty=1, lwd=2)
+points(cumsum(frequency.x), c(0:max.freq.value+1), pch=19, col="red")
