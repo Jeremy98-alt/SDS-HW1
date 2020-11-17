@@ -16,9 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 $~$
 
-We are delve in the world of graphs, but what is a graph? Is a network of verteces with their edges directed or undirected defined by **G=<V,E>**. In this first part of the homework we are encountering a graph with V = {1, 2, 3, 4, 5, 6, 7} and E = {{1, 2}, {1, 4}, {2, 3}, {4, 3}, {3, 5}, {5, 6}, {5, 7}}
+We have delved into the world of graphs, but what is a graph? It is a network of vertices with directed or undirected edges defined by **G=<V,E>**. In this first part of the homework, we deal with a graph having V = {1, 2, 3, 4, 5, 6, 7} and E = {{1, 2}, {1, 4}, {2, 3}, {4, 3}, {3, 5}, {5, 6}, {5, 7}}.
 
-For this reason, we are focussing in a library provided by R **igraph**, we recall this library and we create the graph for this exercise.
+For this reason, we consider a library provided by R: **igraph**. We recall this library and we create the graph for this exercise.
 
 ```{r include=FALSE}
 #pick a specific (small) graph G
@@ -32,7 +32,7 @@ G <- graph( edges=c(1,2, 2,3, 1,4, 4,3, 3,5, 5,6, 5,7),  n=7, directed=F)
 plot(G)
 ```
 
-Now let's face with the **Max-Cut** problem, this problem says that we must solve:
+Now let's face with the **Max-Cut** problem, which askes us to solve:
 
 $~$
 
@@ -40,7 +40,7 @@ $~$
 
 $~$
 
-To calculate the max cut of the main graph G, we used another library of R called **sdpt3r**, then we created the matrix with few methods provided by the igraph library
+To calculate the max cut of the main graph G, we use another library of R called **sdpt3r**; then we create the matrix with few methods provided by the igraph library
 
 $~$
 
@@ -56,7 +56,7 @@ adj <- as.matrix(as_adjacency_matrix(G))
 #maximum cut, use the sdpt3r method
 result <- maxcut(adj)
 
-#show the maxcut, we made the absolute value of the maxcut result, because the main formula gives a negative interpretation
+#show the maxcut; we take the absolute value of the maxcut result, because the main formula gives a negative interpretation
 maxcut <- abs(result$pobj)
 maxcut
 
@@ -65,8 +65,8 @@ maxcut
 
 $~$
 
-Now.. What is U? Is a subset of V, our initial graph. U is a subgraph chose with the Bernoulli distribution, but then we will delve in this argument.
-For any vertex set U $\subseteq$ V, define the cut determined by U as: 
+Now.. What is U? It is a subset of V, our initial graph. U is a subgraph chosen with the Bernoulli distribution, as we will discuss later on.
+For each vertex, set U $\subseteq$ V and define the cut determined by U as: 
 
 $~$
 
@@ -75,7 +75,7 @@ $~$
 $~$
 
 So, let OPT = OPT(*G*) be the size of the maximum cut we are chasing. Our goal is to find an algorithm for which there is a
-factor $\alpha$ > 0 independent on the graph *G* such that the set *U* it builds is guaranteed to have:
+factor $\alpha$ > 0 independent of the graph *G* such that the set *U* it builds is guaranteed to have:
 
 $~$
 
@@ -83,11 +83,11 @@ $~$
 
 $~$
 
-By the way, we are spoke about U the subset of V. This is create every time we run the **Randomized Max-Cut Algorithm**. the algorithm says "create U as *random* subset of V; that is, for each vertex v $\in$ V, flip a coin: if Heads, add v to U otherwise do not."
+By the way, we are asked about U subset of V. This is created every time we run the **Randomized Max-Cut Algorithm**. The algorithm says "create U as *random* subset of V; that is, for each vertex v $\in$ V, flip a coin: if Heads, add v to U otherwise do not."
 
 $~$
 
-We see in this last phrase that is useful to use the **Bernoulli distribution** to obtain each time a success or a failure that allow us to insert in our subset U a vertex of G, with a probability p = 1/2. Because this event simulates the flip of a coin with the results are based on head (1: success) or tail (0: failure), in our case we want to consider the event equal to Head (1: success). 
+We see in this last phrase that is useful to use the **Bernoulli distribution** to obtain each time a success or a failure that allow us to insert in our subset U a vertex of G, with a probability p = 1/2. Because this event simulates the flip of a coin with the results based on head (1: success) or tail (0: failure), in our case we consider the event equal to Head (1: success). (\*\*)
 
 $~$
 
@@ -119,7 +119,7 @@ legend("topleft", c("p = 0.5, n = 100"),
 
 $~$
 
-In this way we created the piece of code about the creation of this subset, we used another library called **Rlab** useful to achieve our goal:
+In this way we created the piece of code about the creation of this subset, we used another library called **Rlab** useful to achieve our goal: (\*\*)
 
 $~$
 
@@ -156,7 +156,7 @@ $~$
 
 The homework pretends to run the Randomized Max-Cut Algorithm a large number (M) of times and evaluate the average cut-size over these M simulations comparing it with the theoretical bound opt(G)/2 to follow the performance analysis.
 
-Before starting to run M times the algorithm we set the adjacency matrix for one side and obtain the edges of our G graph to create the $\delta$(*U*) set.
+Before starting to run the algorithm M times, we set the adjacency matrix for one side and obtain the edges of our G graph to create the $\delta$(*U*) set.
 
 $~$
 
