@@ -154,7 +154,7 @@ U
 
 $~$
 
-The homework pretends to run the Randomized Max-Cut Algorithm a large number (M) of times and evaluate the average cut-size over these M simulations comparing it with the theoretical bound opt(G)/2 to follow the performance analysis.
+The homework pretends to run the Randomized Max-Cut Algorithm for a large number (M) of times and evaluate the average cut-size over these M simulations comparing it with the theoretical bound opt(G)/2 to follow the performance analysis.
 
 Before starting to run the algorithm M times, we set the adjacency matrix for one side and obtain the edges of our G graph to create the $\delta$(*U*) set.
 
