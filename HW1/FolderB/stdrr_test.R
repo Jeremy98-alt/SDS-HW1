@@ -1,88 +1,68 @@
 library(igraph)
 library(Rlab)
 
-?graph_from_literal
-?graph_from_edgelist
+set.seed(140)
 
-edges = cbind(1:4, c(2:4, 1))
-G = graph_from_edgelist(edges, directed = T)
-plot(G)
-
-typeof(get.edgelist(G))
-
-g <- make_(ring(10), with_vertex_(name = LETTERS[1:10])) +
-  vertices('X', 'Y')
-g
-plot(g)
-
-G <- G + vertex(5)
-plot(G)
-
-M = 10^6
-gamma = 0.5
-for (i in 1:M) {
-  prob = rbern(1, prob = gamma)
-  if (prob == 1) {
-    
-  }
-}
-
-for (i in 1:n) {
-  frequency[indegree.distro] <- frequency[indegree.distro] + 1
-}
-
-indegree.distro = c(1,1,1,1,2,2,3,3,3,4,4,4,4,4,5,0,0)
-frequency = rep(0, 6)
-for (i in 1:length(indegree.distro)) {
-  frequency[indegree.distro[i]+1] <- frequency[indegree.distro[i]+1] + 1
-}
-frequency
-?hist
-hist(frequency)
-
-?degree()
-
-?rmarkdown::pandoc_available
-?sample
-?add.edges
-?get.edgelist()
-?add.vertices
-
-list <- c(1,2,3,4,5,6,7,8,9)
-mask <- c(0,1,0,1,0,1,0,1,0)
-list[as.logical(mask)]
-
-
-
-createGraph <- function(G, n, vertex.names){
-  
-  for(i in 5:n){
-    randBern <- rbern(1, gamma) # 1: a link is to a page chosen uniformly at random - 0: copied from existing links.
-    if(randBern == 1){
-      i.th.vertex <- sample(vertex.names, size=1) #choose uniformly at random our page, see REPLACE=TRUE?
-      G <- add_vertices(G, 1) %>%                    #add the link between the new page and the i-th vertex
-        add_edges(c(i, i.th.vertex))
-    } else {
-      edge.list <- get.edgelist(G)
-      dest.vertex <- sample(edge.list[,2], size=1) #choose uniformly at random our page, see REPLACE=TRUE?
-      G <- add_vertices(G, 1) %>%                    #add the link between the new page and the destination vertex
-        add_edges(c(i, dest.vertex))
-    }
-    vertex.names <- append(vertex.names, i)
-  }
-  
-  return(G)
-  
-}
-
-createGraph <- function(graph, n) {
-  for(i in 5:n) {
+createLinks <- function(n.vertices, edges, gamma = 0.5) {
+  vertices = c(1:n.vertices)
+  for(i in 5:n.vertices) {
     randBern <- rbern(1, gamma)
-    if(randBern == 1) {
-      
-    }
-    else {
-      
-    }
+    dest.v <- NULL
+    if(randBern == 1) 
+      dest.v <- sample(vertices[1:(i-1)], size = 1)
+    else 
+      dest.v <- sample(edges[,2], size = 1)
+    edges <- rbind(edges, c(i, dest.v))
   }
+  return(edges)
 }
+
+indegree.distribution <- function(indegree.count.vertex){
+  
+  frequency.x <- rep(0, length(indegree.count.vertex))
+  
+  for (i in 1:length(indegree.count.vertex)) {
+    frequency.x[indegree.count.vertex[i]+1] <- frequency.x[indegree.count.vertex[i]+1] + 1
+  }
+  
+  return(frequency.x)
+  
+}
+
+n.v <- 10^4
+edges <- matrix(c(c(1:4), c(2:4, 1)), nrow = 4, ncol = 2)
+
+M <- 5
+#define total indegree 
+total.indegree <- rep(0, n.v)
+
+#simulate and get the indegree distribution mean
+for(i in 1:M){
+  
+  newg <- createLinks(n.vertices = n.v, edges)
+  
+  indegree.count.vertex <- tabulate(newg[,2], nbins = n.v)
+  
+  total.indegree <- total.indegree + indegree.distribution(indegree.count.vertex)
+  
+}
+
+normalization.indegree <- total.indegree / (length(total.indegree) * M)
+
+
+#Plot the Log-Log plot
+plot(c(0:(n.v-1)), normalization.indegree,
+     main = "in-degree distribution log-log plot", xlab="in-degree", ylab="Number of vertices",
+     lty=2, col=gray(.7), log = "xy")
+points(c(0:(n.v-1)), normalization.indegree, pch=19, col="red")
+
+# Plot the CCDF of X .... I HAVE MY DOUBTS about this
+plot(c(0, 0:(n.v-1), 0), 1-cumsum(c(0, normalization.indegree, 0)), type="s", log="xy",
+     main = "complimentary cumulative degree distribution", xlab="In-degree", ylab="Probability",
+     lty=1, lwd=2)
+points(c(0:(n.v-1)), 1-cumsum(normalization.indegree), pch=19, col="red")
+
+
+m <- matrix(c(c(1:4), c(2:4, 2)), nrow = 4, ncol = 2)
+tabulate(m[,2])
+m
