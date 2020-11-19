@@ -1,0 +1,188 @@
+---
+title: "Part B"
+author: "Jeremy Sapienza & Stefano D'Arrigo"
+date: "22/11/2020"
+output: html_document
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **SDS HOMEWORK** 
+### **PART B**
+
+**People have the power (. . . law. . . )**
+
+$~$
+
+First, we import the libraries that we will use for dealing with graphs (**igraph**) and with the Bernoulli distribution (**Rlab**). 
+
+
+```{r include=FALSE}
+library(igraph)
+library(Rlab)
+
+set.seed(140)
+```
+
+Let $\mathbb{G}$ be the directed graph of vertices $V_{\mathbb{G}}=\{1, 2, 3, 4\}$ and edges $E_{\mathbb{G}}=\{(1, 2), (2, 3), (3, 4), (4, 1)\}$, as shown below:
+
+```{r echo=FALSE}
+G <- graph_from_edgelist(cbind(1:4, c(2:4, 1)), directed = T)
+plot(G)
+```
+
+Each node of the graph $\mathbb{G}$ represents a page of the $\texttt{WWW}$. From this graph, we have to simulate the preferential attachment process, i.e. the process of growth of the network from the simple graph defined above to a one million pages (nodes) network. During each step of this process, a new node is attached to a vertex of $\mathbb{G}$, based on a certain event $E$. 
+
+In particular, the choice of the vertex to which link the new node is binded to a random variable $X\sim Ber(\gamma)$; since $\gamma = 0.5$, the target event is the tossing of a fair coin. If $X = 1$, a vertex is uniformely picked from $V_\mathbb{G}$. Otherwise, an existing link is uniformely picked from the set $E$; the destination node of the new link is the same of the selected link. To be clearer, this case can be compared to a lottery extraction: each node has a certain number of tickets (in-links). As in the previous case, the choice of the ticket is done uniformely at random, but now the node that holds a greater number of tickets, i.e. in-links, is more likely to be selected.
+
+The following $\texttt{R}$ function implements the preferential attachment process:
+
+
+```{r}
+createGraph <- function(G, n.vertices, gamma = 0.5){
+  vertices.names <- as_ids(V(G))
+  for(i in 5:n.vertices){
+    randBern <- rbern(1, gamma) # 1: a link is to a page chosen uniformly at random - 0: copied from existing links.
+    dest.vertex <- NULL
+    if(randBern == 1){
+      dest.vertex <- sample(vertices.names, size=1) #choose uniformly at random our page, see REPLACE=TRUE?
+    } else {
+      edge.list <- get.edgelist(G)
+      dest.vertex <- sample(edge.list[,2], size=1) #choose uniformly at random our page, see REPLACE=TRUE?
+    }
+    G <- add_vertices(G, 1) %>%                    #add the link between the new page and the destination vertex
+        add_edges(c(i, dest.vertex))
+    vertices.names <- append(vertices.names, i)
+  }
+  
+  return(G)
+  
+}
+```
+
+$~$
+
+To easily see the output of the function `createGraph`, we test it with a small number of vertices, say 20, starting from the simple graph defined above:
+
+```{r}
+new.G <- createGraph(G, n.vertices = 20, gamma = 0.5)
+plot(new.G, vertex.size=18, layout= layout.kamada.kawai, edge.curverd=.2, arrow.size=.3, arrow.width=.2, edge.arrow.size=.6, vertex.label.cex=.9)
+```
+
+For each node of the graph, the number of incident links, that is the in-degree, is given by the **igraph** built-in function `degree`:
+
+```{r}
+library(data.table)
+in.degrees <- degree( new.G, v = V(new.G), mode = "in", loops = TRUE, normalized = FALSE )
+transpose(data.frame(in.degree = in.degrees))
+```
+
+At this point, it is worth to count the number of vertices for each in-degree value. The function `indegree.distribution` returns a vector of such counts:
+
+```{r}
+#count number of vertex into the k degree
+indegree.distribution <- function(vertices.indegree){
+  
+  n = length(vertices.indegree)
+  counts.d <- rep(0, n)
+  
+  for (i in 1:n)
+    counts.d[vertices.indegree[i]+1] <- counts.d[vertices.indegree[i]+1] + 1
+  
+  return(counts.d)
+  
+}
+
+
+counts.indegree <- indegree.distribution(vertices.indegree = in.degrees)
+```
+
+Now we are able to compute the empirical degree distribution by dividing each in-degree count by the number of vertices in the graph. This way, we obtain the empirical probability distribution of the degrees, according to the classical definition of probability:
+<center>$\mathbb{P}(E_i)=\frac{n_{E_i}}{n}$, where $E_i=\{\text{vertices of degree }i\},\text{ } n=|V|$ </center>
+
+$~$
+
+```{r}
+normalized.indegree <- counts.indegree / 20
+normalized.indegree
+```
+
+$~$
+
+Finally, we plot the PMF:
+
+```{r}
+#Plot the Log-Log plot
+plot.PMF <- function(data) {
+  n <- length(data) - 1
+  plot(c(0:n), data,
+     main = "In-degree distribution log-log plot", xlab="in-degree", ylab="PMF",
+     lty=2, col=gray(.7), log = "xy")
+  points(c(0:n), data, pch=19, col="red")
+}
+
+plot.PMF(normalized.indegree)
+```
+
+$~$
+
+We plot also the complimentary cumulative degree distribution:
+
+```{r}
+# Plot the CCDF of X
+plot.CCDF <- function(data) {
+  n <- length(data) - 1
+  plot(c(0, 0:n, 0), 1-cumsum(c(0, data, 0)), type="s", log="xy",
+     main = "Complimentary cumulative degree distribution", xlab="In-degree", ylab="CCDF",
+     lty=1, lwd=2)
+  points(c(0:n), 1-cumsum(data), pch=19, col="red")
+}
+
+plot.CCDF(normalized.indegree)
+```
+
+$~$
+
+Clearly, a graph of only 20 nodes is too small to let us analyze and understand the properties of a network like the $\texttt{WWW}$. 
+
+Hence, we now consider a network of 1 million of nodes and we simulate it for $M$ times. Since $M$ can be a small number, let $M=5$. With a `for` loop, we get $M$ empirical degree distributions. 
+
+```{r}
+#input to get the M simulations
+M <- 5
+n.vertices <- 10^4
+#define total indegree
+total.indegree <- rep(0, n.vertices)
+
+#simulate and get the indegree distribution mean
+for(i in 1:M){
+  newg <- createGraph(G, n = n.vertices)
+
+  indegree.count.vertex <- degree( newg, v = V(newg), mode = "in", loops = TRUE, normalized = FALSE ) # find the distribution
+
+  total.indegree <- total.indegree + indegree.distribution(indegree.count.vertex)
+
+}
+```
+
+$~$
+
+Then, we take the mean of those distributions and we plot the PMF and the CCDF as before:
+
+```{r}
+normalized.indegree <- total.indegree / (length(total.indegree) * M)
+
+plot.PMF(normalized.indegree)
+```
+
+```{r}
+plot.CCDF(normalized.indegree)
+```
+
