@@ -37,7 +37,7 @@ createGraph <- function(G, n, vertex.names){
 create a vector of vertex ... or do as.character(V(G)) "
 vertex.names <- as_ids(V(G))
 
-#newg <- createGraph(G, n = 10, vertex.names)
+#newg <- createGraph(G, n = 100, vertex.names)
 #plot(newg, vertex.size=10, layout= layout.kamada.kawai, vertex.color="green", edge.curverd=.2, arrow.size=.1, arrow.width=.1, edge.arrow.size=.3, vertex.label.cex=.9)
 
 
@@ -58,7 +58,7 @@ indegree.distribution <- function(indegree.count.vertex){
 
 #input to get the M simulations
 M <- 5
-n.vertices <- 100000
+n.vertices <- 10000
 #define total indegree 
 total.indegree <- rep(0, n.vertices)
 
@@ -73,9 +73,9 @@ for(i in 1:M){
 }
 
 normalization.indegree <- total.indegree / (length(total.indegree) * M)
-#normalization.indegree
+normalization.indegree[1:20]
 
-# Plot the PMF of X
+#Plot the PMF of X
 plot(c(0:max.freq.value), frequency.x, type="h",
      main = "in-degree distribution", xlab="in-degree", ylab="Number of vertices",
      lty=2, col=gray(.7), xlim=c(0,max.freq.value+1), ylim=c(0, max.freq.value+1), xaxt = "n", yaxt = "n", bty = "n")
