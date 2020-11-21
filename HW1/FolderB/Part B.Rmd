@@ -150,7 +150,7 @@ plot.CCDF(normalized.indegree)
 
 $~$
 
-Clearly, a graph of only 20 nodes is too small to let us analyze and understand the properties of a network like the $\texttt{WWW}$. 
+Clearly, a graph of only 20 nodes is too small to let us analyze and understand the properties of a network like the $\texttt{WWW}$. Indeed, from the PMF and the CCDF it is not possible to get . 
 
 Hence, we now consider a network of 1 million of nodes and we simulate it for $M$ times. Since $M$ can be a small number, let $M=5$. With a `for` loop, we get $M$ empirical degree distributions. 
 
