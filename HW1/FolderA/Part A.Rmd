@@ -5,6 +5,11 @@ date: "22/11/2020"
 output: html_document
 ---
 
+<style>
+body {
+text-align: justify}
+</style>
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -87,7 +92,7 @@ By the way, we are asked about U subset of V. This is created every time we run 
 
 $~$
 
-We see in this last phrase that is useful to use the **Bernoulli distribution** to obtain each time a success or a failure that allow us to insert in our subset U a vertex of G, with a probability p = 1/2. Because this event simulates the flip of a coin with the results based on head (1: success) or tail (0: failure), in our case we consider the event equal to Head (1: success). (\*\*)
+Hence, we have to consider a **Bernoulli distribution** to pick the vertices of G to be inserted into the subset U; thus, a vertex is picked with probability p = 1/2. In particular, a vertex is inserted into U if the outcome of the coin is equal to Head (1: success).
 
 $~$
 
@@ -119,7 +124,7 @@ legend("topleft", c("p = 0.5, n = 100"),
 
 $~$
 
-In this way we created the piece of code about the creation of this subset, we used another library called **Rlab** useful to achieve our goal: (\*\*)
+The following piece of code implements the steps described above; we import the library **Rlab** to leverage the built-in function `rbern`:
 
 $~$
 
@@ -154,7 +159,7 @@ U
 
 $~$
 
-The homework pretends to run the Randomized Max-Cut Algorithm for a large number (M) of times and evaluate the average cut-size over these M simulations comparing it with the theoretical bound opt(G)/2 to follow the performance analysis.
+The goal of the homework is to run Randomized Max-Cut Algorithm for a large number M of times and to evaluate the average cut-size over these M simulations, comparing it with the theoretical bound opt(G)/2.
 
 Before starting to run the algorithm M times, we set the adjacency matrix for one side and obtain the edges of our G graph to create the $\delta$(*U*) set.
 
@@ -173,7 +178,7 @@ list.edges
 
 $~$
 
-After the creation of this dataframe that contains the edges of G graph, we made this algorithm on according to the initial request "Evaluate the average cut-size over these M simulations and compare it with the theoretical bound opt(G)/2."
+After the creation of the dataframe that contains the edges of G graph, by using the following functions we evaluate the average cut-size over these M simulations and compare it with the theoretical bound OPT(G)/2.
 
 $~$
 
@@ -211,7 +216,7 @@ averageCutSize <- function(vertex.names, list.edges, M){
 
 $~$
 
-Call a large number of times the averageCutSize() to see if the performance is respected
+We call the averageCutSize() for a large number of times to see if the real performance is compliant to the expected performance:
 
 $~$
 
@@ -222,8 +227,7 @@ averageCutSize(vertex.names, list.edges, 1000)
 
 $~$
 
-Now, we can see.. if the performance analysis is respected, it says "Let U be the set chosen by this (randomized) algorithm.
-Then the expected size of the cut set determined by U is at least OPT/2 :"
+We compare our empirical result with the theoretical bound, which is:
 
 $~$
 
@@ -238,23 +242,23 @@ theoretical.bound
 
 $~$
 
-The performance is respected, but... If we increase the size of our G graph (maybe with a random graph) which is the result?
+The result we got is almost compliant to the theoretical bound, even though the previous inequality is not verified with the small graph we have considered so far. At this point, we hypothesize that testing the algorithm on a graph with a greater number of vertices would have a better performance, fitting the theoretical bound.
 
 $~$
 
-Now we prefer creating a random graph with the erdos renyi model. We have in this case our model based on the probability to link two nodes with a probability p, we set p = 1/2 for any reason in particular.
+Thus, we try with a random graph, according to the Erdős and Rényi model. We choose $\frac{1}{3}$ as the probability of drawing an edge between two nodes:
 
 $~$
 
 ```{r}
 # Change the graph size to see if there is an impact on the performance
-G2 <- erdos.renyi.game(20, 1/3)
+G2 <- erdos.renyi.game(40, 1/3)
 plot(G2)
 ```
 
 $~$
 
-Now we made the same operations that we saw previously:
+In the case of a graph of 40 nodes, the max-cut is:
 
 $~$
 
@@ -272,7 +276,7 @@ maxcut2
 
 $~$
 
-This is the value, now we passed to generate our subset based on bernoulli distribution
+Running the steps we previously followed in the case of the smaller graph, we obtain the subset U:
 
 $~$
 
@@ -285,7 +289,7 @@ U
 
 $~$
 
-like in the previous example with less verteces, we selected the edges and we saved them to our operations
+Again, we fill the adjacency matrix in a convenient manner:
 
 $~$
 
@@ -298,7 +302,7 @@ colnames(list.edges) <- c("V1", "V2")
 
 $~$
 
-We calculated like the previous steps the maxcut for this graph
+In this case, the max-cut bound is:
 
 $~$
 
@@ -309,15 +313,14 @@ theoretical.bound2
 
 $~$
 
-This is our theoretical bound for this our huge graph and we can see now M times the averageCutSize doing the operation M times
+Finally, we calculate the cut-size for M=1000 times and we get the average cut-size: 
 
 $~$
 
 ```{r}
-averageCutSize(vertex.names, list.edges, 100)
+averageCutSize(vertex.names, list.edges, 1000)
 ```
  
 $~$
 
-We can see that the value is pretty high and the performance is still respected
-
+The result shows that, with a graph of 40 nodes, the average cut-size overcomes the theoretical bound.
