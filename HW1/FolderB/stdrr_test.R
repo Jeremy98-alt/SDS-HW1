@@ -52,7 +52,7 @@ normalization.indegree <- total.indegree / (length(total.indegree) * M)
 
 #Plot the Log-Log plot
 plot(c(0:(n.v-1)), normalization.indegree,
-     main = "in-degree distribution log-log plot", xlab="in-degree", ylab="Number of vertices",
+     main = "in-degree distribution log-log plot", type='l', lwd=3, xlab="in-degree", ylab="Number of vertices",
      lty=2, col=gray(.7), log = "xy")
 points(c(0:(n.v-1)), normalization.indegree, pch=19, col="red")
 
@@ -66,3 +66,12 @@ points(c(0:(n.v-1)), 1-cumsum(normalization.indegree), pch=19, col="red")
 m <- matrix(c(c(1:4), c(2:4, 2)), nrow = 4, ncol = 2)
 tabulate(m[,2])
 m
+
+library(VGAM)
+plot(1:10000, dzeta(1:10000, shape = 4), type = "l", lwd = 3, las = 1, ylab = "Probability",
+     main = "zeta probability function; black: p = 4; blue: p = 2", log = 'xy')
+points(0.10 + 1:6, dzeta(1:6, shape = 4), col = "blue")
+?plot
+
+
+?erdos.renyi
