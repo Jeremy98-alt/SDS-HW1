@@ -100,3 +100,9 @@ points(c(0:(n.vertices-1)), 1-cumsum(normalization.indegree), pch=19, col="red")
 sum(normalization.indegree[1:16])
 
 plot(c(0:(n.vertices-1)), 1-ecdf(normalization.indegree)(normalization.indegree), log="xy")
+
+
+
+
+library(poweRlaw)
+dpldis(1:1000, 1, -2.1)[1:20]

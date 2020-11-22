@@ -35,29 +35,29 @@ set.seed(140)
 Let $\mathbb{G}$ be the directed graph of vertices $V_{\mathbb{G}}=\{1, 2, 3, 4\}$ and edges $E_{\mathbb{G}}=\{(1, 2), (2, 3), (3, 4), (4, 1)\}$, as shown below:
 
 ```{r echo=FALSE}
-edges <- matrix(c(c(1:4), c(2:4, 1)), nrow = 4, ncol = 2)
+edges <- matrix(c(c(1:4), c(2:4, 1)), nrow = 4, ncol = 2) # initialize the vector
 G <- graph_from_edgelist(edges, directed = TRUE)
-plot(G)
+plot(G) # display the vector
 ```
 
 Each node of the graph $\mathbb{G}$ represents a page of the $\texttt{WWW}$. From this graph, we have to simulate the preferential attachment process, i.e. the process of growth of the network from the simple graph defined above to a one million pages (nodes) network. During each step of this process, a new node is attached to a vertex of $\mathbb{G}$, based on a certain event $E$. 
 
-In particular, the choice of the vertex to which link the new node is binded to a random variable $X\sim Ber(\gamma)$; since $\gamma = 0.5$, the target event is the tossing of a fair coin. If $X = 1$, a vertex is uniformely picked from $V_\mathbb{G}$. Otherwise, an existing link is uniformely picked from the set $E$; the destination node of the new link is the same of the selected link. To be clearer, this case can be compared to a lottery extraction: each node has a certain number of tickets (in-links). As in the previous case, the choice of the ticket is done uniformely at random, but now the node that holds a greater number of tickets, i.e. in-links, is more likely to be selected.
+In particular, the choice of the vertex to which link the new node is binded to a random variable $X\sim Ber(\gamma)$; since $\gamma = 0.5$, the target event is the tossing of a fair coin. If $X = 1$, a vertex is uniformly picked from $V_\mathbb{G}$. Otherwise, an existing link is uniformly picked from the set $E$; the destination node of the new link is the same of the selected link. To be clearer, this case can be compared to a lottery extraction: each node has a certain number of tickets (in-links). As in the previous case, the choice of the ticket is done uniformly at random, but now the node that holds a greater number of tickets, i.e. in-links, is more likely to be selected.
 
 The following $\texttt{R}$ function implements the preferential attachment process:
 
 
 ```{r}
 createLinks <- function(n.vertices, edges, gamma = 0.5) {
-  vertices = c(1:n.vertices)
-  for(i in 5:n.vertices) {
-    randBern <- rbern(1, gamma)
+  vertices <- c(1:n.vertices) # create the vector of vertices. At the end, we know that the vertices will be n.vertices
+  for(i in 5:n.vertices) { # start from 5 because the graph has already 4 nodes
+    randBern <- rbern(1, gamma) # flip the coin 
     dest.v <- NULL
     if(randBern == 1) 
-      dest.v <- sample(vertices[1:(i-1)], size = 1)
+      dest.v <- sample(vertices[1:(i-1)], size = 1) # uniform sampling between the existing vertices at the ith iteration
     else 
-      dest.v <- sample(edges[,2], size = 1)
-    edges <- rbind(edges, c(i, dest.v))
+      dest.v <- sample(edges[,2], size = 1) # uniform sampling between the existing edges 
+    edges <- rbind(edges, c(i, dest.v)) # add the new edge
   }
   return(edges)
 }
@@ -65,34 +65,56 @@ createLinks <- function(n.vertices, edges, gamma = 0.5) {
 
 $~$
 
-To speed up the computation of the network, we decided not to use the built-in methods available in **igraph** and to leverage the operations with vector and matrices. Nevertheless, **igraph** methods are used to visualize the graphs and highlight their properties. 
+To speed up the computation of the network, we decided not to use the built-in methods available in **igraph** and to leverage the operations with vector and matrices. Nevertheless, **igraph** methods are used to visualize the graphs and highlight their properties. We provide another version of the function above in which we use **igraph**:
+
+```{r eval=FALSE}
+createGraph <- function(G, n.vertices, gamma = 0.5){
+  vertices.names <- as_ids(V(G))
+  for(i in 5:n.vertices){
+    randBern <- rbern(1, gamma) # 1: a link is to a page chosen uniformly at random - 0: copied from existing links.
+    dest.vertex <- NULL
+    if(randBern == 1){
+      dest.vertex <- sample(vertices.names, size=1) #choose uniformly at random our page
+    } else {
+      edge.list <- get.edgelist(G)
+      dest.vertex <- sample(edge.list[,2], size=1) #choose uniformly at random our page
+    }
+    G <- add_vertices(G, 1) %>%                    #add the link between the new page and the destination vertex
+        add_edges(c(i, dest.vertex))
+    vertices.names <- append(vertices.names, i)
+  }
+  
+  return(G)
+  
+}
+```
 
 To easily see the output of the function `createLinks`, we test it with a small number of vertices, say 20, starting from the simple graph defined above:
 
 ```{r}
-n.v <- 20
-new.edges <- createLinks(n.vertices = n.v, edges, gamma = 0.5)
-new.G <- graph_from_edgelist(new.edges)
+n.v <- 20 # number of vertices
+new.edges <- createLinks(n.vertices = n.v, edges, gamma = 0.5) # edge list of the new network
+new.G <- graph_from_edgelist(new.edges) # create an igraph object
 plot(new.G, vertex.size=18, layout= layout.kamada.kawai, edge.curverd=.2, arrow.size=.3, arrow.width=.2, edge.arrow.size=.6, vertex.label.cex=.9)
 ```
 
 For each node of the graph, the number of incident links, that is the in-degree, is given by the built-in function `tabulate`, which counts the occurrences of a number in a vector:
 
 ```{r}
-indegree.count.vertices <- tabulate(new.edges[,2], nbins = n.v)
+indegree.count.vertices <- tabulate(new.edges[,2], nbins = n.v) # count the in-degree of each node
 ```
 
 At this point, it is worth to count the number of vertices for each in-degree value. The function `indegree.distribution` returns a vector of such counts:
 
 ```{r}
-#count number of vertex into the k degree
+# count the vertices with k degree
 indegree.distribution <- function(vertices.indegree){
 
   n = length(vertices.indegree)
-  counts.d <- rep(0, n)
+  counts.d <- rep(0, n) # vector of degree counts
 
   for (i in 1:n)
-    counts.d[vertices.indegree[i]+1] <- counts.d[vertices.indegree[i]+1] + 1
+    counts.d[vertices.indegree[i]+1] <- counts.d[vertices.indegree[i]+1] + 1 
 
   return(counts.d)
 
@@ -108,7 +130,7 @@ Now we are able to compute the empirical degree distribution by dividing each in
 $~$
 
 ```{r}
-normalized.indegree <- counts.indegree / n.v
+normalized.indegree <- counts.indegree / n.v 
 normalized.indegree
 ```
 
@@ -125,21 +147,15 @@ The discrete power law distribution is such that:
 
 $~$
 
-The following function implements the discrete power law: 
-
-```{r}
-discrete_power_law <- function(data, alpha) {
-  return(data^alpha)
-}
-```
+We leverage the function `dzeta` available in the package **VGAM**.
 
 ```{r echo=FALSE}
-plot(0:20, discrete_power_law(0:20, -2.1),
+plot(1:20, dzeta(1:20, 1.1),
      main = "Discrete power law distribution", xlab="k", ylab="PMF",
-     lty=3, lwd = 3, type = "b", pch = 21, col=gray(.8), 
+     lty=3, lwd = 3, type = "b", pch = 21, col=gray(.8),
      bg = rgb (204 / 255,0,0,0.7))
 
-plot(0:20, discrete_power_law(0:20, -2.1),
+plot(1:20, dzeta(1:20, 1.1),
      main = "Discrete power law distribution log-log plot", xlab="k", ylab="PMF",
      lty=3, lwd = 3, type = "b", pch = 21, col=gray(.8), 
      bg = rgb (204 / 255,0,0,0.7), log = "xy")
@@ -167,7 +183,7 @@ plot(0:20, dpois(0:20, 4),
 
 $~$
 
-Finally, we plot the PMF of the empirical distribution in a log-log plot, comparing it with the two distributions mentioned above:
+Finally, we plot the PMF of the empirical distribution in a log-log plot, comparing it with the two distributions mentioned above. Note that, to avoid errors in plotting the in-degree distribution, we translate it by taking into account $in.degree+1$:
 
 ```{r}
 #Plot the Log-Log plot
@@ -177,13 +193,13 @@ plot.PMF <- function(data) {
             rgb (200 / 255,141 / 255,0,0.7))
   n <- length(data)
   plot(1:n, data,
-     main = "In-degree distribution log-log plot", xlab="In-degree + 1", ylab="PMF",
+     main = "In-degree distribution log-log plot", xlab="In-degree", ylab="PMF",
      lty=3, lwd = 3, type = "b", pch = 21, col=gray(.8), bg = colo[1], log = "xy")
-  lines(1:n, discrete_power_law(1:n, -2.1), type = "l", lty = 3, lwd = 2, col = colo[2], pch = 21,
+  lines(1:(n), dzeta(1:(n), 1.1), type = "l", lty = 3, lwd = 2, col = colo[2], pch = 21,
         bg = colo[2])
   lines(1:n, dpois(1:n, 1), type = "l", lty = 3, lwd = 2, col = colo[3], pch = 21,
         bg = colo[3])
-  legend("top", c("in-degree distro", "power law with alpha=-2.1", "Poisson distro"), 
+  legend("top", c("translated in-degree distro", "power law with alpha=-2.1", "Poisson distro"), 
          col = colo, pch = 19, bty = "n", cex = .8)
 }
 
@@ -218,7 +234,7 @@ Hence, we now consider a network of 1 million of nodes and we simulate it for $M
 ```{r}
 #input to get the M simulations
 M <- 5
-n.v <- 10^4
+n.v <- 10^3
 #define total indegree
 total.indegree <- rep(0, n.v)
 
@@ -239,7 +255,10 @@ Then, we take the mean of those distributions and we plot the PMF and the CCDF a
 
 ```{r}
 normalized.indegree <- total.indegree / (length(total.indegree) * M)
+normalized.indegree[1:20]
+```
 
+```{r}
 plot.PMF(normalized.indegree)
 ```
 
@@ -249,4 +268,14 @@ plot.CCDF(normalized.indegree)
 
 $~$
 
-The results plotted show that the empirical degree distribution appoximately fits a discrete power law, since in a log-log plot the points appoximate a line. To be sure of this first intuition (hypothesis), we run the Kolmogorov-Smirnov test. With a fixed level $\alpha$, this test enstablishes if an empirical distribution follows a reference probability distribution. We leverage the function `ks.test` of the package **dgof**.
+The results plotted show that the empirical degree distribution appoximately fits a discrete power law, since in a log-log plot the points appoximate a line. 
+
+$~$
+
+Finally, we show a network of 500 nodes:
+
+```{r, out.width="100%"}
+new.edges2 <- createLinks(n.vertices = 500, edges)
+new.G <- graph_from_edgelist(new.edges2)
+plot(new.G, vertex.size=2, layout= layout.kamada.kawai, edge.curverd=.2, arrow.size=.1, arrow.width=.1, edge.arrow.size=.1, vertex.label=NA)
+```
