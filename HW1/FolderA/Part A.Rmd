@@ -100,6 +100,10 @@ $~$
 
 $~$
 
+Flipping the coin n times, we obtain a **Binomial distribution** as follows:
+
+$~$
+
 ```{r}
 #Binomial distribution, because we are taking this experiment M times
 colo <- c(rgb(32/255, 74/255, 135/255, 0.7))
@@ -139,6 +143,7 @@ library(Rlab)
 subset.V <- function(vertex.names, number_of_vertex){
   U <- c()
   
+  #according to the bernoulli distribution, if the result is equal to one we append the i-th vertex into our subset U
   for(i in 1:number_of_vertex){
     randBern <- rbern(1, 0.5)
     if(randBern == 1)
@@ -187,6 +192,7 @@ $~$
 num.edges.U <- function(U, list.edges){
   edges <- c()
   
+  #according to the rule of delta(U)
   `%notin%` <- Negate(`%in%`) #define new operator
   for(row in 1:nrow(list.edges)){
     if( (list.edges[row, 1] %in% U) && (list.edges[row, 2] %notin% U) ){

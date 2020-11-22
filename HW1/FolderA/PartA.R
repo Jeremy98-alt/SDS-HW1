@@ -106,7 +106,7 @@ theoretical.bound
 # Change the graph size to see if there is an impact on the performance --------
 library(igraph)
 
-G2 <- erdos.renyi.game(20, 1/5)
+G2 <- erdos.renyi.game(10, 1/5)
 plot(G2)
 
 #firstly search to create our adjacency_matrix from G
