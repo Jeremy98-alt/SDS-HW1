@@ -234,7 +234,7 @@ Hence, we now consider a network of 1 million of nodes and we simulate it for $M
 ```{r}
 #input to get the M simulations
 M <- 5
-n.v <- 10^3
+n.v <- 10^6
 #define total indegree
 total.indegree <- rep(0, n.v)
 
